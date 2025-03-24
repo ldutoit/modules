@@ -21,6 +21,11 @@ process RTGTOOLS_PEDFILTER {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def keep_primary = task.ext.keep_primary == true ? '--keep-primary' : false
+    def remove_parentage = task.ext.remove_parentage == true ? '--remove-parentage' : false
+
+
+
 
     def extension = args.contains("--vcf") ? "vcf.gz" : "ped"
 
