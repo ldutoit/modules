@@ -1,3 +1,16 @@
+// Function to validate and return the compression level option
+def compressionLevelOption(level) {
+    if (!(level instanceof Integer)) {
+        throw new IllegalArgumentException("Compression level must be an integer.")
+    }
+    if (level < 1 || level > 9) {
+        throw new IllegalArgumentException("Compression level must be between 1 and 9.")
+    }
+    return "--compression-level=${level}"
+}
+
+
+
 process RTGTOOLS_PEDFILTER {
     tag "$meta.id"
     label 'process_low'
@@ -25,6 +38,19 @@ process RTGTOOLS_PEDFILTER {
     def remove_parentage = task.ext.remove_parentage == true ? '--remove-parentage' : false
 
 
+        // Use the compressionLevelOption function if the property is set, else default to 5
+    def compressionLevel = task.ext.compressionLevel ? compressionLevelOption(task.ext.compressionLevel) : "--compression-level=5"
+
+    // Build command options using task.ext properties
+    def decompress   = task.ext.decompress   == true ? '--decompress' : ''
+    def force        = task.ext.force        == true ? '--force' : ''
+    def no_terminate = task.ext.no_terminate == true ? '--no-terminate' : ''
+    def stdout       = task.ext.stdout       == true ? '--stdout' : ''
+
+
+    // Build the complete command options string, filtering out any empty strings
+    def gbzip_options = [decompress, force, no_terminate, stdout, compressionLevel].findAll { it }.
+                        join(' ')
 
 
     def extension = args.contains("--vcf") ? "vcf.gz" : "ped"
