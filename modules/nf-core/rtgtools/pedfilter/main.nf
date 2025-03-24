@@ -34,12 +34,14 @@ process RTGTOOLS_PEDFILTER {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def keep_primary = task.ext.keep_primary == true ? '--keep-primary' : false
-    def remove_parentage = task.ext.remove_parentage == true ? '--remove-parentage' : false
+    // def keep_family=task.ext.keep_family
+    // def keep_ids=task.ext.keep_ids
+    def keep_primary = task.ext.keep_primary == true ? '--keep-primary' : ''
+    def remove_parentage = task.ext.remove_parentage == true ? '--remove-parentage' : ''
 
 
         // Use the compressionLevelOption function if the property is set, else default to 5
-    def compressionLevel = task.ext.compressionLevel ? compressionLevelOption(task.ext.compressionLevel) : "--compression-level=5"
+    def compressionLevel = task.ext.compressionLevel ? compressionLevelOption(task.ext.compressionLevel) : ''
 
     // Build command options using task.ext properties
     def decompress   = task.ext.decompress   == true ? '--decompress' : ''
@@ -49,8 +51,7 @@ process RTGTOOLS_PEDFILTER {
 
 
     // Build the complete command options string, filtering out any empty strings
-    def gbzip_options = [decompress, force, no_terminate, stdout, compressionLevel].findAll { it }.
-                        join(' ')
+    def gbzip_options = [decompress, force, no_terminate, stdout, compressionLevel].findAll { it }.join(' ')
 
 
     def extension = args.contains("--vcf") ? "vcf.gz" : "ped"
@@ -59,7 +60,7 @@ process RTGTOOLS_PEDFILTER {
         error "The input and output file have the same name, please use another ext.prefix."
     }
 
-    def postprocess = extension == "vcf.gz" ? "| rtg bgzip ${args2} -" : ""
+    def postprocess = extension == "vcf.gz" ? "| rtg bgzip ${args2} ${compressionLevel} ${decompress} ${force} ${no_terminate} ${stdout} -" : ""
 
     """
     rtg pedfilter \\
