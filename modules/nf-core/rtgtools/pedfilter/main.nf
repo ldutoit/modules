@@ -9,7 +9,45 @@ def compressionLevelOption(level) {
     return "--compression-level=${level}"
 }
 
+// Function to process the --keep-family option.
+// Accepts either a comma-separated String or a Collection of strings.
+def processKeepFamilyString(input) {
+    if (input == null) {
+        return []
+    }
+    def values
+    if (input instanceof String) {
+        values = input.split(',').collect { it.trim() }.findAll { it }
+    } else if (input instanceof Collection) {
+        values = input.collect { it.toString().trim() }.findAll { it }
+    } else {
+        throw new IllegalArgumentException("The --keep-family option must be a string or a list of strings.")
+    }
+    return values.collect { "--keep-family=${it}" }
+}
 
+// Function to process the --keep-ids option.
+// Accepts either a comma-separated String or a Collection of strings.
+def processKeepIdString(input) {
+    if (input == null) {
+        return []
+    }
+    def values
+    if (input instanceof String) {
+        values = input.split(',').collect { it.trim() }.findAll { it }
+    } else if (input instanceof Collection) {
+        values = input.collect { it.toString().trim() }.findAll { it }
+    } else {
+        throw new IllegalArgumentException("The --keep-ids option must be a string or a list of strings.")
+    }
+    return values.collect { "--keep-ids=${it}" }
+}
+
+
+def familyLevelOption(level) {
+    if (!(str instanceof String)) {
+        throw new IllegalArgumentException("Compression level must be a String.")
+    }
 
 process RTGTOOLS_PEDFILTER {
     tag "$meta.id"
@@ -34,24 +72,19 @@ process RTGTOOLS_PEDFILTER {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    // def keep_family=task.ext.keep_family
-    // def keep_ids=task.ext.keep_ids
+
+    def keep_family=processKeepFamilyString(task.ext.keepFamily)
+    def keep_ids=processKeepIdString(task.ext.keepIds)
     def keep_primary = task.ext.keep_primary == true ? '--keep-primary' : ''
     def remove_parentage = task.ext.remove_parentage == true ? '--remove-parentage' : ''
 
 
-        // Use the compressionLevelOption function if the property is set, else default to 5
-    def compressionLevel = task.ext.compressionLevel ? compressionLevelOption(task.ext.compressionLevel) : ''
+    def compressionLevel = compressionLevelOption(task.ext.compressionLevel) 
 
-    // Build command options using task.ext properties
     def decompress   = task.ext.decompress   == true ? '--decompress' : ''
     def force        = task.ext.force        == true ? '--force' : ''
     def no_terminate = task.ext.no_terminate == true ? '--no-terminate' : ''
     def stdout       = task.ext.stdout       == true ? '--stdout' : ''
-
-
-    // Build the complete command options string, filtering out any empty strings
-    def gbzip_options = [decompress, force, no_terminate, stdout, compressionLevel].findAll { it }.join(' ')
 
 
     def extension = args.contains("--vcf") ? "vcf.gz" : "ped"
@@ -65,6 +98,10 @@ process RTGTOOLS_PEDFILTER {
     """
     rtg pedfilter \\
         ${args} \\
+        ${keep_family} \\
+        ${keep_ids}\\
+        ${keep_primary} \\
+        ${remove_parentage}
         ${input} \\
     ${postprocess} > ${prefix}.${extension}
 
