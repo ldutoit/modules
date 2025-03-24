@@ -11,7 +11,7 @@ nextflow_process {
     tag "rtgtools/pedfilter"
 
     test("test-rtgtools-pedfilter-ped") {
-
+        config = './test1.config'
         when {
             process {
                 """
